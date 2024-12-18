@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>로또 맞추기 게임</title>
+<style>
+  body {
+    font-family: sans-serif;
+    margin: 20px;
+  }
+  #hiddenNumbers {
+    margin-bottom: 20px;
+  }
+  #hiddenNumbers span {
+    display: inline-block;
+    width: 30px;
+    text-align: center;
+    border: 1px solid #ccc;
+    margin: 0 3px;
+    padding: 5px;
+    background-color: #eee;
+  }
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 5px;
+    width: 270px;
+  }
+  .number {
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    background: #f5f5f5;
+    border: 1px solid #ccc;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+  }
+  .selected {
+    background: #007bff;
+    color: #fff;
+  }
+  #result {
+    margin-top: 20px;
+  }
+  #controls {
+    margin-top: 20px;
+  }
+  button {
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<h1>로또 맞추기 게임</h1>
+<div id="hiddenNumbers">
+  <h2>숨겨진 숫자 (클릭 후 6개 선택시 공개):</h2>
+  <div id="hiddenContainer"></div>
+</div>
+
+<div id="grid"></div>
+
+<div id="controls">
+  <button id="newRoundBtn">새 라운드</button>
+</div>
+
+<div id="result"></div>
+
+<script>
+  const gridContainer = document.getElementById('grid');
+  const hiddenContainer = document.getElementById('hiddenContainer');
+  const resultDiv = document.getElementById('result');
+  const newRoundBtn = document.getElementById('newRoundBtn');
+  
+  let hiddenNumbers = [];
+  let selectedNumbers = new Set();
+  let revealed = false;
+
+  function generateHiddenNumbers() {
+    const nums = [];
+    while (nums.length < 6) {
+      const randomNum = Math.floor(Math.random() * 45) + 1;
+      if (!nums.includes(randomNum)) {
+        nums.push(randomNum);
+      }
+    }
+    return nums.sort((a,b)=>a-b);
+  }
+
+  function createGrid() {
+    gridContainer.innerHTML = '';
+    for (let i = 1; i <= 45; i++) {
+      const div = document.createElement('div');
+      div.classList.add('number');
+      div.textContent = i;
+      div.addEventListener('click', () => toggleSelect(i, div));
+      gridContainer.appendChild(div);
+    }
+  }
+
+  function displayHiddenNumbers(hidden, reveal = false) {
+    hiddenContainer.innerHTML = '';
+    for (let num of hidden) {
+      const span = document.createElement('span');
+      span.textContent = reveal ? num : '?';
+      hiddenContainer.appendChild(span);
+    }
+  }
+
+  function toggleSelect(num, el) {
+    if (revealed) return; // 이미 결과가 공개된 상태에서는 선택 불가
+    
+    if (selectedNumbers.has(num)) {
+      // 이미 선택된 경우 선택 해제
+      selectedNumbers.delete(num);
+      el.classList.remove('selected');
+    } else {
+      // 선택하지 않은 경우 선택
+      if (selectedNumbers.size < 6) {
+        selectedNumbers.add(num);
+        el.classList.add('selected');
+      }
+    }
+
+    if (selectedNumbers.size === 6) {
+      // 6개 선택 완료 시 숨겨진 번호 공개
+      showResult();
+    }
+  }
+
+  function showResult() {
+    revealed = true;
+    displayHiddenNumbers(hiddenNumbers, true);
+    const hits = hiddenNumbers.filter(num => selectedNumbers.has(num)).length;
+    resultDiv.textContent = `맞춘 개수: ${hits}개`;
+  }
+
+  function newRound() {
+    revealed = false;
+    selectedNumbers.clear();
+    hiddenNumbers = generateHiddenNumbers();
+    displayHiddenNumbers(hiddenNumbers, false);
+    createGrid();
+    resultDiv.textContent = '';
+  }
+
+  newRoundBtn.addEventListener('click', newRound);
+
+  // 초기 라운드 시작
+  newRound();
+</script>
+</body>
+</html>
